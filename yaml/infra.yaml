@@ -1,0 +1,92 @@
+---
+apiVersion: xl-deploy/v1
+kind: Infrastructure
+spec:
+- directory: Infrastructure/DVO
+  children:
+  - directory: PROD
+    children:
+    - name: xebia@xldeploy
+      type: overthere.SshHost
+      tags:
+      - xebia@xldeploy
+      os: UNIX
+      address: 192.168.1.120
+      credentials: Configuration/DVO/PROD/cred-xldeploy-xebia-ssh-token
+    - name: root@wasnd01
+      type: overthere.SshHost
+      os: UNIX
+      address: 192.168.1.200
+      credentials: Configuration/DVO/PROD/cred-root-wasnd01-ssh-token
+      children:
+      - name: KTCell
+        type: was.DeploymentManager
+        wasHome: /opt/IBM/WebSphere/AppServer/profiles/Dmgr
+        username: wadm
+        password: dummy
+        version: WAS_90
+        nodeAgents:
+        - name: KTNode02
+          type: was.NodeAgent
+          servers:
+          - name: Member2
+            type: was.ManagedServer
+        - name: KTNode01
+          type: was.NodeAgent
+          servers:
+          - name: Member1
+            type: was.ManagedServer
+        clusters:
+        - name: Cluster
+          type: was.Cluster
+          tags:
+          - root@wasnd01-01
+          servers:
+          - Infrastructure/DVO/PROD/root@wasnd01/KTCell/KTNode02/Member2
+          - Infrastructure/DVO/PROD/root@wasnd01/KTCell/KTNode01/Member1
+    - name: root@wasnd01K
+      type: overthere.SshHost
+      os: UNIX
+      address: 192.168.1.200
+      username: root
+      password: dummy
+      children:
+      - name: KTCell
+        type: was.DeploymentManager
+        wasHome: /opt/IBM/WebSphere/AppServer/profiles/Dmgr
+        username: wadm
+        password: dummy
+        version: WAS_90
+        nodeAgents:
+        - name: KTNode01
+          type: was.NodeAgent
+          servers:
+          - name: Member1
+            type: was.ManagedServer
+          - name: Member3
+            type: was.ManagedServer
+          webServers:
+          - name: websvr01
+            type: was.ManagedWebServer
+        - name: KTNode02
+          type: was.NodeAgent
+          servers:
+          - name: Member3
+            type: was.ManagedServer
+          - name: Member2
+            type: was.ManagedServer
+        clusters:
+        - name: Cluster
+          type: was.Cluster
+          servers:
+          - Infrastructure/DVO/PROD/root@wasnd01K/KTCell/KTNode02/Member2
+          - Infrastructure/DVO/PROD/root@wasnd01K/KTCell/KTNode01/Member1
+        - name: Cluster02
+          type: was.Cluster
+          tags:
+          - cluster02
+          servers:
+          - Infrastructure/DVO/PROD/root@wasnd01K/KTCell/KTNode02/Member3
+          - Infrastructure/DVO/PROD/root@wasnd01K/KTCell/KTNode01/Member3
+- directory: Infrastructure/DVO2
+  hoehoe: hoevalue
