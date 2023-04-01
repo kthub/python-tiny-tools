@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-def odd_or_even():
-    max = 5 # loop count
+
+# check odd or even
+def odd_or_even(max = 5):
     for i in range(1, max+1):
         if i % 2 != 0:
-            print("{0} is odd".format(i))
+            print("{0} is odd（奇数）".format(i))
         else:
-            print("{0} is even".format(i))
+            print("{0} is even（偶数）".format(i))
 
 # main function
 if __name__ == "__main__":
-    odd_or_even()
-    print(u'あいうえお')
+    odd_or_even(3)
