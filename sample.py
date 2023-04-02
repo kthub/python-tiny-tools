@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+import pprint
+import sys
+from utils import shuffle
 
 # check odd or even
 def odd_or_even(max = 5):
@@ -8,6 +10,21 @@ def odd_or_even(max = 5):
         else:
             print("{0} is even（偶数）".format(i))
 
-# main function
-if __name__ == "__main__":
-    odd_or_even(3)
+# odd or even
+odd_or_even(3)
+
+# randomc divide
+person = [
+    'Keiichi',
+    'Maki',
+    'Yoko',
+    'Hidekazu'
+]
+# print list
+print("Before shuffle: {0}".format(person))
+# shuffle
+person = shuffle.shuffle(person)
+# print list
+print("After shuffle: {0}".format(person))
+
+pprint.pprint(sys.path)
