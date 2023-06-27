@@ -2,6 +2,9 @@ import pprint
 import sys
 from utils import shuffle
 
+##
+## Function Demo
+##
 # check odd or even
 def odd_or_even(max = 5):
     for i in range(1, max+1):
@@ -13,7 +16,9 @@ def odd_or_even(max = 5):
 # odd or even
 odd_or_even(3)
 
-# randomc divide
+##
+## Shuffle List
+##
 person = [
     'Keiichi',
     'Maki',
@@ -27,4 +32,7 @@ person = shuffle.shuffle(person)
 # print list
 print("After shuffle: {0}".format(person))
 
+##
+## Module search path
+##
 pprint.pprint(sys.path)
