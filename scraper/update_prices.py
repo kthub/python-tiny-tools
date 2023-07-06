@@ -1,13 +1,25 @@
+"""
+File: update_prices.py
+Author: Keiichi Tsuda
+Email: keiichi.tsuda@gmail.com
+Github: github.com/kthub
+Description: This script updates prices.csv
+"""
 import os, re, csv, threading
 from datetime import datetime, timedelta
 import yahoo_japan_scraper as scraper
 
-# !! CHANGE HERE !!
-data_dir = '/DATA_DIRECTORY/'
-data_file = 'prices.csv'
+DATA_DIR = '/Users/keiichi/home/gitrepo/jupyter-demo/data/'
+DATA_FILE = 'prices.csv'
+CSV_IDX_ASSET_NAME = 0
+CSV_IDX_CODE = 1
+CSV_IDX_CURRENT_PRICE = 3
+NA = 'N/A'
+TMP_SUFFIX = 'tmp'
+DATE_FORMAT = "%Y%m%d%H%M"
 
-current_csv = data_dir + data_file
-tmp_csv = data_dir + data_file + 'tmp'
+current_csv = os.path.join(DATA_DIR, DATA_FILE)
+tmp_csv = os.path.join(DATA_DIR, DATA_FILE + TMP_SUFFIX)
 print_lock = threading.Lock()
 housekeep = True
 
@@ -15,73 +27,68 @@ housekeep = True
 ## Update row
 ##
 def update_row(row):
+  # Check if the row has at least 4 elements
   if len(row) > 3:
-    original = int(row[3])
-    updated = scraper.get_price(row[1])
-    row[3] = updated
+    original = int(row[CSV_IDX_CURRENT_PRICE])
+    try:
+      updated = scraper.get_price(row[CSV_IDX_CODE])
+    except Exception as e:
+      with print_lock:
+        print(f"Error updating price for {row[CSV_IDX_ASSET_NAME]}: {e}")
+      return
+    row[CSV_IDX_CURRENT_PRICE] = updated
 
-    # change rate
+    # calculate change rate
     cr = round((updated - original)/original, 4) * 100
     formatted_rate = f"{'+' if cr > 0 else ''}{cr:.2f}"
 
     # print result
     with print_lock:
-      print('price for ' + row[0] + ' is updated from ' +
-            str(original) + ' to ' + str(updated) +
-            ' (' + formatted_rate + '%)')
+      print(f'price for {row[CSV_IDX_ASSET_NAME]} is updated from {original} to {updated} ({formatted_rate}%)')
 
 ##
 ## Main
 ##
 if __name__ == "__main__":
-  print('start updating prices...')
-
-  # Read from current data file
+  # Read from the current data file
   with open(current_csv, 'r') as current_file:
     reader = csv.reader(current_file)
     rows = list(reader)
 
-  # Update prices
-  lnum = 0
+  # Update prices (multi-threading)
   threads = []
-  for row in rows:
-    lnum += 1
-    if lnum == 1:
+  for index, row in enumerate(rows):
+    if index == 0 or row[CSV_IDX_CODE] == NA:
       continue
-    if row[1] == 'N/A':
-      continue
-    else:
-      thread = threading.Thread(target=update_row, args=(row,))
-      thread.start()
-      threads.append(thread)
+    thread = threading.Thread(target=update_row, args=(row,))
+    thread.start()
+    threads.append(thread)
   for thread in threads:
     thread.join()
 
-  # Write to temporary file
+  # Write to the temporary file
   with open(tmp_csv, 'w', newline='') as output_file:
     writer = csv.writer(output_file)
     writer.writerows(rows)
 
   # Backup current data file
-  formatted_date = datetime.now().strftime("%Y%m%d%H%M")
+  formatted_date = datetime.now().strftime(DATE_FORMAT)
   os.rename(current_csv, current_csv + '.' + formatted_date)
 
-  # Replace current data file with updated file
+  # Replace the current data file with the updated one
   os.rename(tmp_csv, current_csv)
 
   # Housekeep
   if (housekeep):
-    regex = re.compile(r'prices.csv.\d+')
-    bkup_csv_list = [f for f in os.listdir(data_dir) if regex.match(f)]
+    regex = re.compile(f'{DATA_FILE}\.\d+')
+    bkup_csv_list = [f for f in os.listdir(DATA_DIR) if regex.match(f)]
 
     for bkup in bkup_csv_list:
       parts = bkup.rsplit(".", 1)
       date_str = parts[-1]
-      datetime_object = datetime.strptime(date_str, "%Y%m%d%H%M")
+      datetime_object = datetime.strptime(date_str, DATE_FORMAT)
 
       remove_criteria = datetime.now() - timedelta(weeks=1)
       if datetime_object < remove_criteria:
-        #print("remove file (older than 1 weeks) : " + data_dir + bkup)
-        os.remove(data_dir + bkup)
-
-  print('done')
+        print(f'remove file (older than 1 weeks) : {DATA_DIR}{bkup}')
+        os.remove(os.path.join(DATA_DIR, bkup))
