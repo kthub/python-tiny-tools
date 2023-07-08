@@ -83,12 +83,13 @@ if __name__ == "__main__":
     regex = re.compile(f'{DATA_FILE}\.\d+')
     bkup_csv_list = [f for f in os.listdir(DATA_DIR) if regex.match(f)]
 
-    for bkup in bkup_csv_list:
-      parts = bkup.rsplit(".", 1)
-      date_str = parts[-1]
-      datetime_object = datetime.strptime(date_str, DATE_FORMAT)
+    # Use list comprehension to filter the list of backup files
+    removable_bkup_csv_list = [
+        bkup for bkup in bkup_csv_list
+        if datetime.strptime(bkup.rsplit(".", 1)[-1], DATE_FORMAT) < datetime.now() - timedelta(weeks=1)
+    ]
 
-      remove_criteria = datetime.now() - timedelta(weeks=1)
-      if datetime_object < remove_criteria:
+    # Remove the old backup files
+    for bkup in removable_bkup_csv_list:
         print(f'remove file (older than 1 weeks) : {DATA_DIR}{bkup}')
         os.remove(os.path.join(DATA_DIR, bkup))
