@@ -77,7 +77,8 @@ async def main():
 
   # Housekeep
   if (housekeep):
-    regex = re.compile(f'{DATA_FILE}\.\d+')
+    #regex = re.compile(f'{DATA_FILE}\.\d+')  # deprecated syntax
+    regex = re.compile(DATA_FILE + '.¥d+')
     bkup_csv_list = [f for f in os.listdir(DATA_DIR) if regex.match(f)]
 
     # Use list comprehension to filter the list of backup files
