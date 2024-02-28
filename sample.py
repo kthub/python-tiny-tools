@@ -26,7 +26,8 @@ person = [
     'Hidekazu'
 ]
 # print list
-print("Before shuffle: {0}".format(person))
+#print("Before shuffle: {0}".format(person))
+print(f"Before shuffle: {person}")
 # shuffle
 person = shuffle.shuffle(person)
 # print list
