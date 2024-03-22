@@ -27,5 +27,6 @@ async def get_price(code):
   # parse JSON
   data = json.loads(json_response)
   price = data['mainFundPriceBoard']['fundPrices']['price']
+  date = data['mainFundPriceBoard']['fundPrices']['updateDate']
 
-  return int(price.replace(",",""))
+  return (int(price.replace(",","")), date)

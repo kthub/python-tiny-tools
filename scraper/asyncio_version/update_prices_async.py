@@ -1,5 +1,5 @@
 """
-File: update_prices.py
+File: update_prices_async.py
 Author: Keiichi Tsuda
 Email: keiichi.tsuda@gmail.com
 Github: github.com/kthub
@@ -16,6 +16,9 @@ DATA_FILE = 'prices.csv'
 CSV_IDX_ASSET_NAME = 0
 CSV_IDX_CODE = 1
 CSV_IDX_CURRENT_PRICE = 3
+CSV_IDX_CURRENT_DATE = 4
+CSV_IDX_PREVIOUS_PRICE = 5
+CSV_IDX_PREVIOUS_DATE = 6
 NA = 'N/A'
 TMP_SUFFIX = 'tmp'
 DATE_FORMAT = "%Y%m%d%H%M"
@@ -28,22 +31,30 @@ housekeep = True
 ## Update row
 ##
 async def update_row(row):
-  # Check if the row has at least 4 elements
-  if len(row) > 3:
-    original = int(row[CSV_IDX_CURRENT_PRICE])
+  # Check if the row has at least 7 elements
+  if len(row) > 6:
+    original = (int(row[CSV_IDX_CURRENT_PRICE]), row[CSV_IDX_CURRENT_DATE])
     try:
       updated = await scraper.get_price(row[CSV_IDX_CODE])
     except Exception as e:
       print(f"Error updating price for {row[CSV_IDX_ASSET_NAME]}: {e}")
       return
-    row[CSV_IDX_CURRENT_PRICE] = updated
+    
+    # overwrite previous data
+    if (original[1] != updated[1]):
+      row[CSV_IDX_PREVIOUS_PRICE] = original[0]
+      row[CSV_IDX_PREVIOUS_DATE] = original[1]
+
+    # update current data
+    row[CSV_IDX_CURRENT_PRICE] = updated[0]
+    row[CSV_IDX_CURRENT_DATE] = updated[1]
 
     # calculate change rate
-    cr = round((updated - original)/original, 4) * 100
-    formatted_rate = f"{'+' if cr > 0 else ''}{cr:.2f}"
+    #cr = round((updated - original)/original, 4) * 100
+    #formatted_rate = f"{'+' if cr > 0 else ''}{cr:.2f}"
 
     # print result
-    print(f'price for {row[CSV_IDX_ASSET_NAME]} is updated from {original} to {updated} ({formatted_rate}%)')
+    #print(f'price for {row[CSV_IDX_ASSET_NAME]} is updated from {original} to {updated} ({formatted_rate}%)')
 
 ##
 ## Main
@@ -77,7 +88,6 @@ async def main():
 
   # Housekeep
   if (housekeep):
-    #regex = re.compile(f'{DATA_FILE}\.\d+')  # deprecated syntax
     regex = re.compile(DATA_FILE + '.¥d+')
     bkup_csv_list = [f for f in os.listdir(DATA_DIR) if regex.match(f)]
 
@@ -89,7 +99,7 @@ async def main():
 
     # Remove the old backup files
     for bkup in removable_bkup_csv_list:
-        print(f'remove file (older than 1 weeks) : {DATA_DIR}{bkup}')
+        #print(f'remove file (older than 1 weeks) : {DATA_DIR}{bkup}')
         os.remove(os.path.join(DATA_DIR, bkup))
 
 
